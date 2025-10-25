@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if the requesting user is an official.
+    function isOfficial() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'official';
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Users can read, update, and delete their own profile.
+      allow read, update, delete: if request.auth.uid == userId;
+      // Users can create their own profile document.
+      allow create: if request.auth.uid == userId;
+      // Officials are allowed to list all documents in the users collection.
+      allow list: if isOfficial();
+    }
+
+    // Rules for the 'tests' collection
+    match /tests/{testId} {
+      // An athlete can read their own tests, and officials can read any test.
+      allow read: if request.auth.uid == resource.data.athleteId || isOfficial();
+      // Athletes can create new test documents.
+      allow create: if request.auth.uid == request.resource.data.athleteId;
+      // Officials can update tests (e.g., to validate them).
+      allow update: if isOfficial();
+      // No one should be able to delete tests from the client.
+      allow delete: if false;
+    }
+    
+    // Rules for the 'badges' collection
+    match /badges/{badgeId} {
+      // All authenticated users can read the master list of badges.
+      allow read: if request.auth != null;
+      // Writing to the master badges list should be done via a backend/admin tool, not by clients.
+      allow write: if false;
+    }
+
+    // Rules for a user's earned badges
+    match /users/{userId}/earnedBadges/{badgeId} {
+        // Users can read their own earned badges.
+        allow read: if request.auth.uid == userId;
+        // Badges should be awarded by a secure process (e.g., Cloud Function), not written directly by clients.
+        allow write: if false;
+    }
+    
+    // Rules for the 'dailyChallenges' collection
+    match /dailyChallenges/{challengeId} {
+        // All authenticated users can read the daily challenges.
+        allow read: if request.auth != null;
+        // Challenges should be managed via a backend/admin tool, not by clients.
+        allow write: if false;
+    }
+  }
+}
