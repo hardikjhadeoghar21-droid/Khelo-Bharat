@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Khelo Bharat application.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the user (matches Firebase Auth UID)." },
+        "name": { "type": "string", "description": "Full name of the user." },
+        "email": { "type": "string", "description": "Email address of the user.", "format": "email" },
+        "role": { "type": "string", "enum": ["athlete", "official"], "description": "Role of the user." },
+        "avatar": { "type": "string", "description": "URL of the user's profile picture." },
+        "age": { "type": "number", "description": "Age of the athlete." },
+        "height": { "type": "number", "description": "Height of the athlete in cm." },
+        "weight": { "type": "number", "description": "Weight of the athlete in kg." },
+        "gender": { "type": "string", "enum": ["Male", "Female"], "description": "Gender of the athlete." }
+      },
+      "required": ["id", "name", "email", "role", "avatar"]
+    },
+    "Test": {
+      "title": "Test",
+      "type": "object",
+      "description": "Represents a test taken by an athlete.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the test." },
+        "athleteId": { "type": "string", "description": "Reference to the User (athlete)." },
+        "testType": { "type": "string", "description": "Type of test (e.g., High Jump, Sit-ups)." },
+        "testDateTime": { "type": "string", "format": "date-time", "description": "Date and time when the test was taken." },
+        "score": { "type": "number", "description": "Score obtained by the athlete in the test." },
+        "videoUrl": { "type": "string", "description": "URL of the video recorded during the test." },
+        "repCount": { "type": "number", "description": "Number of legal repetitions counted during the test." },
+        "aiFeedback": { "type": "string", "description": "Feedback from the AI model regarding the test." },
+        "isValid": { "type": "boolean", "description": "Indicates if the test submission was valid." }
+      },
+      "required": ["id", "athleteId", "testType", "testDateTime", "score"]
+    },
+    "Badge": {
+      "title": "Badge",
+      "type": "object",
+      "description": "Represents a badge that can be earned by athletes.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the badge." },
+        "name": { "type": "string", "description": "Name of the badge (e.g., Novice, Adept, Expert)." },
+        "tier": { "type": "string", "description": "The tier of the badge."},
+        "description": { "type": "string", "description": "Description of the badge." },
+        "imageUrl": { "type": "string", "description": "URL of the image for the badge." },
+        "criteria": { "type": "string", "description": "Criteria for earning the badge." }
+      },
+      "required": ["id", "name", "description", "imageUrl"]
+    },
+    "DailyChallenge": {
+      "title": "Daily Challenge",
+      "type": "object",
+      "description": "Represents a daily challenge for an athlete.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "exerciseType": { "type": "string", "enum": ["sit-ups", "high-jump"] },
+        "targetReps": { "type": "number" },
+        "timeLimitSeconds": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "badgeAwarded": { "type": "string", "description": "ID of the badge awarded upon completion."}
+      },
+      "required": ["id", "title", "exerciseType", "targetReps"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores all user profile data, for both athletes and officials. The document ID matches the Firebase Auth UID. Users can read/write their own profile."
+    },
+    "/tests/{testId}": {
+      "schema": { "$ref": "#/entities/Test" },
+      "description": "Stores all test submissions. The `athleteId` field links the test to a user. Athletes can create tests and read their own test history."
+    },
+    "/badges/{badgeId}": {
+      "schema": { "$ref": "#/entities/Badge" },
+      "description": "A public collection defining all available badges in the application."
+    },
+    "/users/{userId}/earnedBadges/{badgeId}": {
+        "schema": { "$ref": "#/entities/Badge" },
+        "description": "A subcollection storing the badges a specific user has earned. Users can read their own earned badges."
+    },
+    "/dailyChallenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/DailyChallenge" },
+      "description": "Stores the available daily challenges."
+    }
+  }
+}
